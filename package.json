@@ -1,0 +1,12 @@
+{
+  "name": "castro",
+  "version": "1.0.0",
+  "description": "js karplus strong demo",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify index.js > bundle.js",
+    "test": "npm run build && http-server"
+  },
+  "author": "Chinmay Pendharkar",
+  "license": "UNLICENSED"
+}
