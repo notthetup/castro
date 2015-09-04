@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "browserify index.js > bundle.js",
-    "test": "npm run build && http-server"
+    "test": "parallelshell 'watchify index.js -o bundle.js' 'http-server'"
   },
   "author": "Chinmay Pendharkar",
   "license": "UNLICENSED"

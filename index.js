@@ -1,21 +1,22 @@
 var Guitar = require('./src/guitar.js');
 var sequencer = require('./src/sequencer.js')
+var audiokeys = require('./src/sequencer.js')
 
-window.getControlsValues =  {
-    stringTension: stringTension,
-    characterVariation: characterVariation,
-    stringDamping: stringDamping,
-    stringDampingVariation: stringDampingVariation,
-    stringDampingCalculation: stringDampingCalculation,
-    pluckDamping: pluckDamping,
-    pluckDampingVariation: pluckDampingVariation,
-    body: body,
-    stereoSpread: stereoSpread
+window.controlValues =  {
+    stringTension:0.5,
+    characterVariation:0.5,
+    stringDamping:0.5,
+    stringDampingVariation:0.5,
+    stringDampingCalculation:"magic",
+    pluckDamping:0.5,
+    pluckDampingVariation:0.5,
+    body: "none",
+    stereoSpread:0.2
 }
 
 // calculate the constant used for the low-pass filter
 // used in the Karplus-Strong loop
-window.calculateSmoothingFactor = function (string, tab, options) {
+window.calculateSmoothingFactor = function (string, tab, options, note) {
     var smoothingFactor;
     if (options.stringDampingCalculation == "direct") {
         smoothingFactor = options.stringDamping;
@@ -34,11 +35,26 @@ window.calculateSmoothingFactor = function (string, tab, options) {
 }
 
 
-var guitar;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
-guitar = new Guitar(audioCtx, audioCtx.destination);
-sequencer.startGuitarPlaying(guitar, audioCtx);
+// var guitar = new Guitar(audioCtx, audioCtx.destination);
+var string = new GuitarString(audioCtx, audioCtx.destination, 0, 2, 4);// E2
+var keyboard = new AudioKeys({
+    polyphony: 1,
+});
+
+keyboard.down( function(note) {
+    console.log(note.note-60);
+    string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
+    // sequencer.startGuitarPlaying(guitar,audioCtx);
+});
+
+keyboard.up( function(note) {
+    // guitar.strings[1].pluck(audioCtx.currentTime, note.velocity/127, null, note.frequency);
+});
+
+
+// sequencer.startGuitarPlaying(guitar, audioCtx);
 
 
 

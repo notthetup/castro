@@ -1,74 +1,23 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Guitar = require('./src/guitar.js');
 var sequencer = require('./src/sequencer.js')
+var audiokeys = require('./src/sequencer.js')
 
-window.getControlsValues = function () {
-    var stringTensionSlider =
-        document.getElementById("stringTension");
-    var stringTension = stringTensionSlider.valueAsNumber;
-
-    var characterVariationSlider =
-        document.getElementById("characterVariation");
-    var characterVariation = characterVariationSlider.valueAsNumber;
-
-    var stringDampingSlider =
-        document.getElementById("stringDamping");
-    var stringDamping = stringDampingSlider.valueAsNumber;
-
-    var stringDampingVariationSlider =
-        document.getElementById("stringDampingVariation");
-    var stringDampingVariation = stringDampingVariationSlider.valueAsNumber;
-
-    var pluckDampingSlider =
-        document.getElementById("pluckDamping");
-    var pluckDamping = pluckDampingSlider.valueAsNumber;
-
-    var pluckDampingVariationSlider =
-        document.getElementById("pluckDampingVariation");
-    var pluckDampingVariation = pluckDampingVariationSlider.valueAsNumber;
-
-    var stereoSpreadSlider =
-        document.getElementById("stereoSpread");
-    var stereoSpread = stereoSpreadSlider.valueAsNumber;
-
-    var magicCalculationRadio =
-        document.getElementById("magicCalculation");
-    var directCalculationRadio =
-        document.getElementById("directCalculation");
-    var stringDampingCalculation;
-    if (magicCalculationRadio.checked) {
-        stringDampingCalculation = "magic";
-    } else if (directCalculationRadio.checked) {
-        stringDampingCalculation = "direct";
-    }
-
-    var noBodyRadio =
-        document.getElementById("noBody");
-    var simpleBodyRadio =
-        document.getElementById("simpleBody");
-    var body;
-    if (noBodyRadio.checked) {
-        body = "none";
-    } else if (simpleBodyRadio.checked) {
-        body = "simple";
-    }
-
-    return {
-        stringTension: stringTension,
-        characterVariation: characterVariation,
-        stringDamping: stringDamping,
-        stringDampingVariation: stringDampingVariation,
-        stringDampingCalculation: stringDampingCalculation,
-        pluckDamping: pluckDamping,
-        pluckDampingVariation: pluckDampingVariation,
-        body: body,
-        stereoSpread: stereoSpread
-    };
+window.controlValues =  {
+    stringTension:0.5,
+    characterVariation:0.5,
+    stringDamping:0.5,
+    stringDampingVariation:0.5,
+    stringDampingCalculation:"magic",
+    pluckDamping:0.5,
+    pluckDampingVariation:0.5,
+    body: "none",
+    stereoSpread:0.2
 }
 
 // calculate the constant used for the low-pass filter
 // used in the Karplus-Strong loop
-window.calculateSmoothingFactor = function (string, tab, options) {
+window.calculateSmoothingFactor = function (string, tab, options, note) {
     var smoothingFactor;
     if (options.stringDampingCalculation == "direct") {
         smoothingFactor = options.stringDamping;
@@ -87,11 +36,26 @@ window.calculateSmoothingFactor = function (string, tab, options) {
 }
 
 
-var guitar;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
-guitar = new Guitar(audioCtx, audioCtx.destination);
-sequencer.startGuitarPlaying(guitar, audioCtx);
+// var guitar = new Guitar(audioCtx, audioCtx.destination);
+var string = new GuitarString(audioCtx, audioCtx.destination, 0, 2, 4);// E2
+var keyboard = new AudioKeys({
+    polyphony: 1,
+});
+
+keyboard.down( function(note) {
+    console.log(note.note-60);
+    string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
+    // sequencer.startGuitarPlaying(guitar,audioCtx);
+});
+
+keyboard.up( function(note) {
+    // guitar.strings[1].pluck(audioCtx.currentTime, note.velocity/127, null, note.frequency);
+});
+
+
+// sequencer.startGuitarPlaying(guitar, audioCtx);
 
 
 
@@ -206,7 +170,7 @@ GuitarString.prototype.pluck = function(startTime, velocity, tab) {
     var sampleCount = 1.0 * sampleRate;
     var buffer = this.audioCtx.createBuffer(channels, sampleCount, sampleRate);
 
-    var options = window.getControlsValues();
+    var options = window.controlValues
     var smoothingFactor = calculateSmoothingFactor(this, tab, options);
     // 'tab' represents which fret is held while plucking
     // each fret represents an increase in pitch by one semitone
