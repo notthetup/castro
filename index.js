@@ -45,6 +45,7 @@ var keyboard = new AudioKeys({
     polyphony: 1,
 });
 var dials;
+var valueMap = ['stringTension','characterVariation','stringDamping','stringDampingVariation','pluckDamping','pluckDampingVariation','stereoSpread'];
 
 keyboard.down( function(note) {
     string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
@@ -77,11 +78,20 @@ function onMIDIConect(midi){
             // console.log(midiMessage);
             if(midiMessage.messageType === "controlchange"){
                 var dialIndex = midiMessage.controllerNumber-16;
-                var newValue = midiMessage.controllerValue/127;
+                var newValue;
+
+                if (dialIndex === 6){
+                    newValue = (midiMessage.controllerValue-63)/64;
+                    window.controlValues[valueMap[dialIndex]] = -newValue;
+                }else{
+                    newValue = midiMessage.controllerValue/127;
+                    window.controlValues[valueMap[dialIndex]] = newValue;
+                }
                 if (dialIndex < dials.length){
                     $(dials[dialIndex]).val(newValue).trigger('change');
                 }
 
+                // console.log(window.controlValues);
             }
         }
     });
