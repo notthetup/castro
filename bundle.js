@@ -4,13 +4,13 @@ var sequencer = require('./src/sequencer.js')
 var audiokeys = require('./src/sequencer.js')
 
 window.controlValues =  {
-    stringTension:0.5,
+    stringTension:0,
     characterVariation:0.5,
     stringDamping:0.5,
-    stringDampingVariation:0.5,
+    stringDampingVariation:0.25,
     stringDampingCalculation:"magic",
     pluckDamping:0.5,
-    pluckDampingVariation:0.5,
+    pluckDampingVariation:0.25,
     body: "none",
     stereoSpread:0.2
 }
@@ -45,14 +45,12 @@ var keyboard = new AudioKeys({
 });
 
 keyboard.down( function(note) {
-    console.log(note.note-60);
     string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
-    // sequencer.startGuitarPlaying(guitar,audioCtx);
 });
 
-keyboard.up( function(note) {
+// keyboard.up( function(note) {
     // guitar.strings[1].pluck(audioCtx.currentTime, note.velocity/127, null, note.frequency);
-});
+// });
 
 
 // sequencer.startGuitarPlaying(guitar, audioCtx);

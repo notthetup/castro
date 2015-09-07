@@ -3,12 +3,67 @@
 <head>
 	<title>Castro</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="jquery-2.1.4.min.js"></script>
+	<script src="jquery.knob.min.js"></script>
 	<script src="audiokeys.js"></script>
 	<script src="bundle.js"></script>
+	<script>
+    $(function() {
+        $(".dial").knob({
+        	'change' : function (v) {
+        		var varName = this.$div[0].parentElement.id;
+        		window.controlValues[varName] = v;
+        	}
+        });
+    });
+	</script>
 </head>
 <body>
 	<h1 class="heading"> Castro </h1>
+	<div class="rack">
+		<div class="knoblabel" id="stringTension">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				String Tension
+			</div>
+		</div>
+		<div class="knoblabel" id="characterVariation">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.5 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				Character Variation
+			</div>
+		</div>
+		<div class="knoblabel" id="stringDamping">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.25 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				String Damping
+			</div>
+		</div>
+		<div class="knoblabel" id="stringDampingVariation">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.25 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				String Damping Variation
+			</div>
+		</div>
+		<div class="knoblabel" id="pluckDamping">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.5 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				Pluck Damping
+			</div>
+		</div>
+		<div class="knoblabel" id="pluckDampingVariation">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.25 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				Pluck Damping Variation
+			</div>
+		</div>
+		<div class="knoblabel" id="stereoSpread">
+			<input type="text" data-angleOffset=180 data-min=0 data-max=1 data-step=0.01 value=0.2 class="dial" data-width=100 data-height=100 data-fgColor="#3C97BF">
+			<div class="label">
+				Stereo Spread
+			</div>
+		</div>
+	</div>
 	<img src="audiokeys-mapping-rows1.jpg" width="100%">
-
 </body>
 </html>
