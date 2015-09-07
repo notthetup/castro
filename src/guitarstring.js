@@ -1,4 +1,4 @@
-AsmFunctionsWrapper = require('./guitarstring_asm.js');
+var AsmFunctionsWrapper = require('./guitarstring_asm.js');
 
 function GuitarString(
         audioCtx, audioDestination, stringN, octave, semitone) {

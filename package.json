@@ -8,5 +8,8 @@
     "test": "parallelshell 'watchify index.js -o bundle.js' 'http-server'"
   },
   "author": "Chinmay Pendharkar",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "midimessage": "^1.0.2"
+  }
 }

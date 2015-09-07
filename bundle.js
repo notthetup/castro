@@ -1,7 +1,9 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Guitar = require('./src/guitar.js');
-var sequencer = require('./src/sequencer.js')
-var audiokeys = require('./src/sequencer.js')
+var GuitarString = require('./src/guitarstring.js');
+var sequencer = require('./src/sequencer.js');
+var audiokeys = require('./src/sequencer.js');
+var MIDIMessage = require('midimessage');
 
 window.controlValues =  {
     stringTension:0,
@@ -43,10 +45,53 @@ var string = new GuitarString(audioCtx, audioCtx.destination, 0, 2, 4);// E2
 var keyboard = new AudioKeys({
     polyphony: 1,
 });
+var dials;
 
 keyboard.down( function(note) {
     string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
 });
+
+if (navigator.requestMIDIAccess){
+    navigator.requestMIDIAccess().then( onMIDIInit, onMIDIReject );
+}
+else{
+    console.error("DOH! No MIDI support present in your browser.");
+}
+
+function onMIDIInit (midi){
+    dials = $(".dial")
+
+    onMIDIConect(midi);
+
+    midi.onstatechange = function(event){
+        console.log("MIDIConnectionEvent on port", event.port);
+        if (event.port.type === "input" && event.port.connection === "open"){
+            onMIDIConect(midi);
+        }
+    }
+}
+
+function onMIDIConect(midi){
+    midi.inputs.forEach(function(input){
+        input.onmidimessage = function(event){
+            var midiMessage = MIDIMessage(event);
+            // console.log(midiMessage);
+            if(midiMessage.messageType === "controlchange"){
+                var dialIndex = midiMessage.controllerNumber-16;
+                var newValue = midiMessage.controllerValue/127;
+                if (dialIndex < dials.length){
+                    $(dials[dialIndex]).val(newValue).trigger('change');
+                }
+
+            }
+        }
+    });
+}
+
+function onMIDIReject (error){
+    console.error(error);
+    return;
+}
 
 // keyboard.up( function(note) {
     // guitar.strings[1].pluck(audioCtx.currentTime, note.velocity/127, null, note.frequency);
@@ -58,8 +103,113 @@ keyboard.down( function(note) {
 
 
 
-},{"./src/guitar.js":2,"./src/sequencer.js":5}],2:[function(require,module,exports){
-GuitarString = require('./guitarstring.js');
+},{"./src/guitar.js":3,"./src/guitarstring.js":4,"./src/sequencer.js":6,"midimessage":2}],2:[function(require,module,exports){
+(function (global){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.midimessage = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+exports["default"] = function (event) {
+	function MIDIMessage(event) {
+		this._event = event;
+		this._data = event.data;
+		this.receivedTime = event.receivedTime;
+
+		if (this._data && this._data.length < 2) {
+			console.warn("Illegal MIDI message of length", this._data.length);
+			return;
+		}
+
+		this._messageCode = event.data[0] & 0xf0;
+		this.channel = event.data[0] & 0x0f;
+
+		switch (this._messageCode) {
+
+			// Note Off
+			case 0x80:
+				this.messageType = "noteoff";
+				this.key = event.data[1] & 0x7F;
+				this.velocity = event.data[2] & 0x7F;
+				break;
+
+			// Note On
+			case 0x90:
+				this.messageType = "noteon";
+				this.key = event.data[1] & 0x7F;
+				this.velocity = event.data[2] & 0x7F;
+				break;
+
+			// Polyphonic Key Pressure
+			case 0xA0:
+				this.messageType = "keypressure";
+				this.key = event.data[1] & 0x7F;
+				this.pressure = event.data[2] & 0x7F;
+				break;
+
+			// Control Change
+			case 0xB0:
+				this.messageType = "controlchange";
+				this.controllerNumber = event.data[1] & 0x7F;
+				this.controllerValue = event.data[2] & 0x7F;
+
+				if (this.controllerNumber === 120 && this.controllerValue === 0) {
+					this.channelModeMessage = "allsoundoff";
+				} else if (this.controllerNumber === 121) {
+					this.channelModeMessage = "resetallcontrollers";
+				} else if (this.controllerNumber === 122) {
+					if (this.controllerValue === 0) {
+						this.channelModeMessage = "localcontroloff";
+					} else {
+						this.channelModeMessage = "localcontrolon";
+					}
+				} else if (this.controllerNumber === 123 && this.controllerValue === 0) {
+					this.channelModeMessage = "allnotesoff";
+				} else if (this.controllerNumber === 124 && this.controllerValue === 0) {
+					this.channelModeMessage = "omnimodeoff";
+				} else if (this.controllerNumber === 125 && this.controllerValue === 0) {
+					this.channelModeMessage = "omnimodeon";
+				} else if (this.controllerNumber === 126) {
+					this.channelModeMessage = "monomodeon";
+				} else if (this.controllerNumber === 127) {
+					this.channelModeMessage = "polymodeon";
+				}
+				break;
+
+			// Program Change
+			case 0xC0:
+				this.messageType = "programchange";
+				this.program = event.data[1];
+				break;
+
+			// Channel Pressure
+			case 0xD0:
+				this.messageType = "channelpressure";
+				this.pressure = event.data[1] & 0x7F;
+				break;
+
+			// Pitch Bend Change
+			case 0xE0:
+				this.messageType = "pitchbendchange";
+				var msb = event.data[2] & 0x7F;
+				var lsb = event.data[1] & 0x7F;
+				this.pitchBend = (msb << 8) + lsb;
+				break;
+		}
+	}
+
+	return new MIDIMessage(event);
+};
+
+module.exports = exports["default"];
+
+},{}]},{},[1])(1)
+});
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],3:[function(require,module,exports){
+var GuitarString = require('./guitarstring.js');
 
 // JavaScript's class definitions are just functions
 // the function itself serves as the constructor for the class
@@ -117,8 +267,8 @@ Guitar.prototype.setMode = function(mode) {
 
 module.exports = Guitar;
 
-},{"./guitarstring.js":3}],3:[function(require,module,exports){
-AsmFunctionsWrapper = require('./guitarstring_asm.js');
+},{"./guitarstring.js":4}],4:[function(require,module,exports){
+var AsmFunctionsWrapper = require('./guitarstring_asm.js');
 
 function GuitarString(
         audioCtx, audioDestination, stringN, octave, semitone) {
@@ -211,7 +361,7 @@ GuitarString.prototype.pluck = function(startTime, velocity, tab) {
 
 module.exports = GuitarString;
 
-},{"./guitarstring_asm.js":4}],4:[function(require,module,exports){
+},{"./guitarstring_asm.js":5}],5:[function(require,module,exports){
 function AsmFunctionsWrapper() {
 }
 
@@ -739,7 +889,7 @@ function asmFunctions(stdlib, foreign, heapBuffer) {
 
 module.exports = AsmFunctionsWrapper;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var Guitar = require('./guitar.js');
 
 // this was derived experimentally to match Andre Michelle's
@@ -859,4 +1009,4 @@ module.exports = {
     'startGuitarPlaying': startGuitarPlaying,
 }
 
-},{"./guitar.js":2}]},{},[1]);
+},{"./guitar.js":3}]},{},[1]);

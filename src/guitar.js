@@ -1,4 +1,4 @@
-GuitarString = require('./guitarstring.js');
+var GuitarString = require('./guitarstring.js');
 
 // JavaScript's class definitions are just functions
 // the function itself serves as the constructor for the class
