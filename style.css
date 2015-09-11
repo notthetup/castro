@@ -1,14 +1,13 @@
-@import url(https://fonts.googleapis.com/css?family=Tangerine);
-@import url(https://fonts.googleapis.com/css?family=PT+Sans+Narrow);
+@import url(https://fonts.googleapis.com/css?family=Niconne|Ruda|PT+Sans+Narrow);
+
 .heading {
 	text-align: center;
-	font-family: "Tangerine";
-	font-weight: 900;
-	font-size: 5em;
+	font-family: "Niconne";
+	font-size: 6em;
 	margin-bottom: 20px;
 }
 
-.rack{
+.rack {
 	display: flex;
 	justify-content: space-between;
 }
@@ -20,8 +19,28 @@
 
 }
 
-.knoblabel{
+.knoblabel {
 	display:flex;
 	flex-direction: column;
 	align-items: center;
+}
+
+.subheading {
+	text-align: center;
+	font-family: "Ruda";
+	font-size: 1.5em;
+	margin-top: 10px;
+	margin-bottom: 50px;
+}
+
+.highlight {
+	color: red;
+}
+
+.footer {
+	text-align: center;
+	font-family: "Ruda";
+	font-size: 1.5em;
+	margin-top: 10px;
+	margin-bottom: 50px;
 }
