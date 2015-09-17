@@ -39,8 +39,10 @@ window.calculateSmoothingFactor = function (string, tab, options, note) {
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
-// var guitar = new Guitar(audioCtx, audioCtx.destination);
-var string = new GuitarString(audioCtx, audioCtx.destination, 0, 2, 4);// E2
+var fader = audioCtx.createGain();
+fader.connect(audioCtx.destination);
+var guitar = new Guitar(audioCtx, fader);
+var string = new GuitarString(audioCtx, fader, 0, 2, 4);// E2
 var keyboard = new AudioKeys({
     polyphony: 1,
 });
@@ -72,26 +74,36 @@ function onMIDIInit (midi){
 }
 
 function onMIDIConect(midi){
+    console.log("Midi connected");
     midi.inputs.forEach(function(input){
         input.onmidimessage = function(event){
-            var midiMessage = MIDIMessage(event);
-            // console.log(midiMessage);
-            if(midiMessage.messageType === "controlchange"){
-                var dialIndex = midiMessage.controllerNumber-16;
+            var msg = MIDIMessage(event);
+            // console.log(msg);
+            if(msg.messageType === "controlchange"){
+                var dialIndex = msg.controllerNumber-16;
                 var newValue;
 
-                if (dialIndex === 6){
-                    newValue = (midiMessage.controllerValue-63)/64;
-                    window.controlValues[valueMap[dialIndex]] = -newValue;
-                }else{
-                    newValue = midiMessage.controllerValue/127;
-                    window.controlValues[valueMap[dialIndex]] = newValue;
-                }
-                if (dialIndex < dials.length){
+                if (dialIndex >= 0 && dialIndex < dials.length){
+                    if (dialIndex === 6){
+                        newValue = (msg.controllerValue-63)/64;
+                        window.controlValues[valueMap[dialIndex]] = -newValue;
+                    }else {
+                        newValue = msg.controllerValue/127;
+                        window.controlValues[valueMap[dialIndex]] = newValue;
+                    }
                     $(dials[dialIndex]).val(newValue).trigger('change');
+                }else if (msg.controllerNumber === 41 && msg.controllerValue === 0){
+                    // play released
+                    sequencer.startGuitarPlaying(guitar, audioCtx)
+                }else if (msg.controllerNumber === 42 && msg.controllerValue === 0){
+                    // pause released
+                    sequencer.stopGuitarPlaying();
+                }else if (msg.controllerNumber === 7){
+                    // pause released
+                    fader.gain.value = msg.controllerValue/127;
+                    console.log(msg.controllerValue/127);
                 }
 
-                // console.log(window.controlValues);
             }
         }
     });

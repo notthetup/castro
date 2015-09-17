@@ -40,8 +40,10 @@ window.calculateSmoothingFactor = function (string, tab, options, note) {
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
-// var guitar = new Guitar(audioCtx, audioCtx.destination);
-var string = new GuitarString(audioCtx, audioCtx.destination, 0, 2, 4);// E2
+var fader = audioCtx.createGain();
+fader.connect(audioCtx.destination);
+var guitar = new Guitar(audioCtx, fader);
+var string = new GuitarString(audioCtx, fader, 0, 2, 4);// E2
 var keyboard = new AudioKeys({
     polyphony: 1,
 });
@@ -73,26 +75,36 @@ function onMIDIInit (midi){
 }
 
 function onMIDIConect(midi){
+    console.log("Midi connected");
     midi.inputs.forEach(function(input){
         input.onmidimessage = function(event){
-            var midiMessage = MIDIMessage(event);
-            // console.log(midiMessage);
-            if(midiMessage.messageType === "controlchange"){
-                var dialIndex = midiMessage.controllerNumber-16;
+            var msg = MIDIMessage(event);
+            // console.log(msg);
+            if(msg.messageType === "controlchange"){
+                var dialIndex = msg.controllerNumber-16;
                 var newValue;
 
-                if (dialIndex === 6){
-                    newValue = (midiMessage.controllerValue-63)/64;
-                    window.controlValues[valueMap[dialIndex]] = -newValue;
-                }else{
-                    newValue = midiMessage.controllerValue/127;
-                    window.controlValues[valueMap[dialIndex]] = newValue;
-                }
-                if (dialIndex < dials.length){
+                if (dialIndex >= 0 && dialIndex < dials.length){
+                    if (dialIndex === 6){
+                        newValue = (msg.controllerValue-63)/64;
+                        window.controlValues[valueMap[dialIndex]] = -newValue;
+                    }else {
+                        newValue = msg.controllerValue/127;
+                        window.controlValues[valueMap[dialIndex]] = newValue;
+                    }
                     $(dials[dialIndex]).val(newValue).trigger('change');
+                }else if (msg.controllerNumber === 41 && msg.controllerValue === 0){
+                    // play released
+                    sequencer.startGuitarPlaying(guitar, audioCtx)
+                }else if (msg.controllerNumber === 42 && msg.controllerValue === 0){
+                    // pause released
+                    sequencer.stopGuitarPlaying();
+                }else if (msg.controllerNumber === 7){
+                    // pause released
+                    fader.gain.value = msg.controllerValue/127;
+                    console.log(msg.controllerValue/127);
                 }
 
-                // console.log(window.controlValues);
             }
         }
     });
@@ -807,6 +819,10 @@ var Guitar = require('./guitar.js');
 // it doesn't seem to appear in the ActionScript code anywhere...
 var timeUnit = 0.12;
 
+
+// play/stop
+var isPlaying = false;
+
 // Create sound samples for the current part of the strum sequence,
 // and queue generation of sound samples of the following part.
 // The rhythms parts have as fine a granularity as possible to enable
@@ -902,7 +918,9 @@ function queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime,
         generateIn = 0;
 
     nextGenerationCall = function() {
-        queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime, audioCtx);
+        if (isPlaying){
+            queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime, audioCtx);
+        }
     };
     setTimeout(nextGenerationCall, generateIn * 1000);
 }
@@ -913,10 +931,17 @@ function startGuitarPlaying(guitar, audioCtx) {
     var startChordIndex = 0;
     var precacheTime = 0.0;
     queueStrums(guitar,startSequenceN, blockStartTime, startChordIndex, precacheTime, audioCtx);
+    isPlaying = true;
+}
+
+function stopGuitarPlaying() {
+    isPlaying = false;
+
 }
 
 module.exports = {
     'startGuitarPlaying': startGuitarPlaying,
+    'stopGuitarPlaying': stopGuitarPlaying
 }
 
 },{"./guitar.js":3}]},{},[1]);

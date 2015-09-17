@@ -5,6 +5,10 @@ var Guitar = require('./guitar.js');
 // it doesn't seem to appear in the ActionScript code anywhere...
 var timeUnit = 0.12;
 
+
+// play/stop
+var isPlaying = false;
+
 // Create sound samples for the current part of the strum sequence,
 // and queue generation of sound samples of the following part.
 // The rhythms parts have as fine a granularity as possible to enable
@@ -100,7 +104,9 @@ function queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime,
         generateIn = 0;
 
     nextGenerationCall = function() {
-        queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime, audioCtx);
+        if (isPlaying){
+            queueStrums(guitar,sequenceN, blockStartTime, chordIndex, precacheTime, audioCtx);
+        }
     };
     setTimeout(nextGenerationCall, generateIn * 1000);
 }
@@ -111,8 +117,15 @@ function startGuitarPlaying(guitar, audioCtx) {
     var startChordIndex = 0;
     var precacheTime = 0.0;
     queueStrums(guitar,startSequenceN, blockStartTime, startChordIndex, precacheTime, audioCtx);
+    isPlaying = true;
+}
+
+function stopGuitarPlaying() {
+    isPlaying = false;
+
 }
 
 module.exports = {
     'startGuitarPlaying': startGuitarPlaying,
+    'stopGuitarPlaying': stopGuitarPlaying
 }
