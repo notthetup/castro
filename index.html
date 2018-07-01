@@ -3,9 +3,9 @@
 <head>
 	<title>Castro</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
-	<script src="jquery-2.1.4.min.js"></script>
+	<script src="jquery-3.3.1.min.js"></script>
 	<script src="jquery.knob.min.js"></script>
-	<script src="audiokeys.js"></script>
+	<script src="audiokeys.min.js"></script>
 	<script src="bundle.js"></script>
 	<!-- <script src="node_modules/midimessage/dist/index.js"></script> -->
 	<script>
@@ -20,6 +20,13 @@
 	</script>
 </head>
 <body>
+	<div class="modal" id="modal">
+	  <div class="modal-guts">
+	    <h1>Castro.. Karplus-Strong + WebAudio</h1>
+	    <button class="close-button" id="close-button">Start Playing</button>
+	  </div>
+	</div>
+
 	<h1 class="heading"> Castro </h1>
 	<div class="subheading"> Keyboard triggered <span class="highlight">Ka</span>rplus-<span class="highlight">Stro</span>ng Guitar with MIDI Controls</div>
 	<div class="rack">

@@ -36,29 +36,35 @@ window.calculateSmoothingFactor = function (string, tab, options, note) {
     return smoothingFactor;
 }
 
+window.addEventListener('load', function(){
+    modal = document.getElementById('modal');
+    modalClose = document.getElementById('close-button');
+    modalClose.addEventListener('click', function(){
+        modal.remove();
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        var audioCtx = new AudioContext();
+        var fader = audioCtx.createGain();
+        fader.connect(audioCtx.destination);
+        var guitar = new Guitar(audioCtx, fader);
+        var string = new GuitarString(audioCtx, fader, 0, 2, 4);// E2
+        var keyboard = new AudioKeys({
+            polyphony: 1,
+        });
+        var dials;
+        var valueMap = ['stringTension','characterVariation','stringDamping','stringDampingVariation','pluckDamping','pluckDampingVariation','stereoSpread'];
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
-var audioCtx = new AudioContext();
-var fader = audioCtx.createGain();
-fader.connect(audioCtx.destination);
-var guitar = new Guitar(audioCtx, fader);
-var string = new GuitarString(audioCtx, fader, 0, 2, 4);// E2
-var keyboard = new AudioKeys({
-    polyphony: 1,
+        keyboard.down( function(note) {
+            string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
+        });
+
+        if (navigator.requestMIDIAccess){
+            navigator.requestMIDIAccess().then( onMIDIInit, onMIDIReject );
+        }
+        else{
+            console.error("DOH! No MIDI support present in your browser.");
+        }
+    });
 });
-var dials;
-var valueMap = ['stringTension','characterVariation','stringDamping','stringDampingVariation','pluckDamping','pluckDampingVariation','stereoSpread'];
-
-keyboard.down( function(note) {
-    string.pluck(audioCtx.currentTime, note.velocity/127, note.note-60);
-});
-
-if (navigator.requestMIDIAccess){
-    navigator.requestMIDIAccess().then( onMIDIInit, onMIDIReject );
-}
-else{
-    console.error("DOH! No MIDI support present in your browser.");
-}
 
 function onMIDIInit (midi){
     dials = $(".dial")
